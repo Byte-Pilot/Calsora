@@ -1,15 +1,15 @@
 CREATE TABLE users
 (
     id INT SERIAL PRIMARY KEY,
-    email VARCHAR(254) UNIQUE NOT NULL,
-    password CHAR(16) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
     bday DATE NOT NULL,
     created_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE user_configs
 (
-    user_id INT REFERENCES users(id),
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
     sex CHAR(1) NOT NULL CHECK (sex IN ('M', 'W')),
     height SMALLINT NOT NULL CHECK (height > 100),
     weight SMALLINT NOT NULL CHECK (weight > 0),
@@ -21,7 +21,7 @@ CREATE TABLE user_configs
 CREATE TABLE meals
 (
     id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id),
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     cal SMALLINT NOT NULL,
     protein NUMERIC(6,2) NOT NULL,
@@ -29,3 +29,6 @@ CREATE TABLE meals
     fats NUMERIC(6,2) NOT NULL,
     created_at TIMESTAMP NOT NULL
 );
+
+CREATE INDEX idx_user_id_meals ON meals(user_id)
+CREATE INDEX idx_user_id_configs ON user_configs(user_id)
