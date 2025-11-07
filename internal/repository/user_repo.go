@@ -2,6 +2,8 @@ package repository
 
 import (
 	"Calsora/internal/models"
+	"context"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
 )
 
@@ -17,7 +19,7 @@ type UserRepository struct {
 func NewUserRepositury(db *pgxpool.Pool) *UserRepository {
 	return &UserRepository{db: db}
 }
-func (r *UserRepository) Create(user *model.User) error {
+func (r *UserRepository) Create(user *models.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
