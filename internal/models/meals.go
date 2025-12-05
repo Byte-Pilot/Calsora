@@ -3,10 +3,10 @@ package models
 import "time"
 
 type Meals struct {
-	ID        uint      `json:"id"`
-	UserID    uint      `json:"user_id"`
+	ID        int       `json:"id"`
+	UserID    int       `json:"user_id"`
 	Name      string    `json:"name"`
-	Cal       uint      `json:"cal"`
+	Cal       int       `json:"cal"`
 	Protein   float32   `json:"protein"`
 	Carbs     float32   `json:"carbs"`
 	Fats      float32   `json:"fats"`

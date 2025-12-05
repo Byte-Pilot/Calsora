@@ -6,7 +6,7 @@ import (
 )
 
 type MealServiceInterface interface {
-	AddMeal(userID uint, description string, photoURL string) (*models.Meals, error)
+	AddMeal(userID int, description string, photoURL string) (*models.Meals, error)
 }
 
 type MealService struct {
@@ -17,10 +17,10 @@ func NewMealService(repo repository.MealRepositoryInterface) *MealService {
 	return &MealService{repo: repo}
 }
 
-func (s *MealService) AddMeal(userID uint, description string, photoURL string) (*models.Meals, error) {
+func (s *MealService) AddMeal(userID int, description string, photoURL string) (*models.Meals, error) {
 	// gpt
 	var protein, carbs, fats float32 = 99.0, 99.0, 99.0
-	var cal uint = 99
+	var cal int = 99
 	name := "TestMeal"
 
 	meal := &models.Meals{

@@ -21,7 +21,7 @@ func NewMealHandler(svc services.MealServiceInterface) *mealHandler {
 type addMealReq struct {
 	Description string `json:"description"`
 	PhotoURL    string `json:"photo_url"`
-	UserID      uint   `json:"user_id"`
+	UserID      int    `json:"user_id"`
 }
 
 func (mh *mealHandler) AddMeal(c *gin.Context) {
@@ -30,6 +30,7 @@ func (mh *mealHandler) AddMeal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	meal, err := mh.service.AddMeal(req.UserID, req.Description, req.PhotoURL)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"Calsora/internal/Error"
 	"Calsora/internal/models"
 	"Calsora/internal/repository"
 	"Calsora/internal/utils"
@@ -23,6 +24,7 @@ func NewUserService(repo *repository.UserRepository) *UserService {
 }
 
 func (s *UserService) Register(email, password string, bday time.Time) (*models.User, error) {
+
 	if err := utils.ValidatePass(password); err != nil {
 		return nil, fmt.Errorf("validatePass: ", err)
 	}
@@ -38,7 +40,7 @@ func (s *UserService) Register(email, password string, bday time.Time) (*models.
 		Bday:     bday,
 	}
 	if err := s.repo.Create(user); err != nil {
-		return nil, fmt.Errorf("db create user: %w", err)
+		return nil, Error.NewCustomError("repo create: "+err.Error(), "Не удалось создать юзера")
 	}
 	return user, nil
 }
