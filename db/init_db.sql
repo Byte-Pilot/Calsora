@@ -4,7 +4,7 @@ CREATE TABLE users
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     bday DATE NOT NULL,
-    created_at TIMESTAMP NOT NULL
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE user_configs
@@ -15,7 +15,7 @@ CREATE TABLE user_configs
     weight SMALLINT NOT NULL CHECK (weight > 0),
     cal_goal SMALLINT NOT NULL CHECK (cal_goal > 0),
     activity SMALLINT NOT NULL CHECK (activity BETWEEN 1 AND 5),
-    updated_at TIMESTAMP NOT NULL
+    updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE meals
@@ -27,7 +27,7 @@ CREATE TABLE meals
     protein NUMERIC(6,2) NOT NULL,
     carbs NUMERIC(6,2) NOT NULL,
     fats NUMERIC(6,2) NOT NULL,
-    created_at TIMESTAMP NOT NULL
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_user_id_meals ON meals(user_id)
