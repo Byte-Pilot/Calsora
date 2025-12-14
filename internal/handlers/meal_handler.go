@@ -4,10 +4,13 @@ import (
 	"Calsora/internal/services"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 type MealHandlerInterface interface {
 	AddMeal(c *gin.Context)
+	DeleteMeal(c *gin.Context)
+	GetDailyNutritionStats(c *gin.Context)
 }
 
 type mealHandler struct {
@@ -37,4 +40,34 @@ func (mh *mealHandler) AddMeal(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, meal)
+}
+
+func (mh *mealHandler) DeleteMeal(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid meal ID"})
+		return
+	}
+	err = mh.service.DeleteMeal(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Meal not found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+}
+
+func (mh *mealHandler) GetDailyNutritionStats(c *gin.Context) {
+	daysStr := c.Param("days")
+	days, err := strconv.Atoi(daysStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid days"})
+		return
+	}
+	stats, err := mh.service.GetDailyNutritionStats(days)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+	c.JSON(http.StatusOK, stats)
 }

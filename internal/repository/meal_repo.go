@@ -9,6 +9,7 @@ import (
 
 type MealRepositoryInterface interface {
 	CreateMeal(meal *models.Meals) error
+	DeleteMeal(meal int) error
 }
 
 type MealRepository struct {
@@ -25,6 +26,18 @@ func (m *MealRepository) CreateMeal(meals *models.Meals) error {
 
 	query := `INSERT INTO meals (user_id, name, cal, protein, carbs, fats) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at`
 	if err := m.db.QueryRow(ctx, query, meals.UserID, meals.Name, meals.Cal, meals.Protein, meals.Carbs, meals.Fats).Scan(&meals.ID, &meals.CreatedAt); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *MealRepository) DeleteMeal(meal int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	query := `DELETE FROM meals WHERE id = $1`
+	_, err := m.db.Query(ctx, query, meal)
+	if err != nil {
 		return err
 	}
 	return nil

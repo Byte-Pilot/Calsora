@@ -7,6 +7,7 @@ import (
 
 type MealServiceInterface interface {
 	AddMeal(userID int, description string, photoURL string) (*models.Meals, error)
+	DeleteMeal(userID int) error
 }
 
 type MealService struct {
@@ -19,6 +20,8 @@ func NewMealService(repo repository.MealRepositoryInterface) *MealService {
 
 func (s *MealService) AddMeal(userID int, description string, photoURL string) (*models.Meals, error) {
 	// gpt
+	description = ""
+	photoURL = ""
 	var protein, carbs, fats float32 = 99.0, 99.0, 99.0
 	var cal int = 99
 	name := "TestMeal"
@@ -36,4 +39,8 @@ func (s *MealService) AddMeal(userID int, description string, photoURL string) (
 		return nil, err
 	}
 	return meal, nil
+}
+
+func (s *MealService) DeleteMeal(mealID int) error {
+	return s.repo.DeleteMeal(mealID)
 }

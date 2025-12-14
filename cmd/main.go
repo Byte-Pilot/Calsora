@@ -8,16 +8,20 @@ import (
 	"Calsora/internal/server"
 	"Calsora/internal/services"
 	"context"
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
 )
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal(err)
+		log.Print(".env file not found")
 	}
 
 	conf := config.GetConfig()
+
+	gin.SetMode(conf.GinMode)
+
 	conn, err := db.ConncetPostgres(conf.PostgresURL)
 	if err != nil {
 		log.Fatal(err)

@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	PostgresURL string `env:"POSTGRES_DB_STR"`
+	GinMode     string `env:"GIN_MODE" envDefault:"debug"`
 }
 
 func GetConfig() Config {

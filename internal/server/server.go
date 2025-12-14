@@ -13,7 +13,8 @@ func RunServer(userHandler handlers.UserHandlerInterface, mealHandler handlers.M
 		api.GET("/users/:id", userHandler.GetById)
 		api.DELETE("/users/delete/:id", userHandler.DeleteId)
 
-		api.POST("meals", mealHandler.AddMeal)
+		api.POST("meals/add", mealHandler.AddMeal)
+		api.DELETE("meals/delete/:id", mealHandler.DeleteMeal)
 	}
 
 	return r
