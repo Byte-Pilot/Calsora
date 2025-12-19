@@ -5,7 +5,7 @@ import (
 )
 
 type UserConfig struct {
-	UserId    uint      `json:"user_id,omitempty"`
+	UserID    uint      `json:"user_id,omitempty"`
 	Sex       string    `json:"sex,omitempty"`
 	Height    uint      `json:"height,omitempty"`
 	Weight    uint      `json:"weight,omitempty"`

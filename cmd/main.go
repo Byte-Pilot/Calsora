@@ -35,11 +35,16 @@ func main() {
 	userService := services.NewUserService(userRepo)
 	userHandler := handlers.NewUserHandler(userService)
 
+	authRepo := repository.NewAuthRepository(conn)
+	subRepo := repository.NewSubscriptionsRepository(conn)
+	authService := services.NewAuthService(authRepo, userRepo, subRepo)
+	authHandler := handlers.NewAuthHandler(authService)
+
 	mealRepo := repository.NewMealRepository(conn)
 	mealService := services.NewMealService(mealRepo)
 	mealHandler := handlers.NewMealHandler(mealService)
 
-	s := server.RunServer(userHandler, mealHandler)
+	s := server.RunServer(userHandler, authHandler, mealHandler)
 	if err := s.Run(":8080"); err != nil {
 		log.Fatal(err)
 	}

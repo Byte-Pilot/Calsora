@@ -36,7 +36,7 @@ func (m *MealRepository) DeleteMeal(meal int) error {
 	defer cancel()
 
 	query := `DELETE FROM meals WHERE id = $1`
-	_, err := m.db.Query(ctx, query, meal)
+	_, err := m.db.Exec(ctx, query, meal)
 	if err != nil {
 		return err
 	}

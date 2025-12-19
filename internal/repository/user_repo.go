@@ -10,6 +10,7 @@ import (
 type UserRepositoryInterface interface {
 	Create(user *models.User) error
 	GetById(id uint) (*models.User, error)
+	GetByEmail(email string) (*models.User, error)
 	DeleteId(id uint) error
 }
 
@@ -43,12 +44,25 @@ func (r *UserRepository) GetById(id uint) (*models.User, error) {
 	return &user, nil
 }
 
+func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var user models.User
+	query := `SELECT id, email, password, bday, created_at FROM users WHERE email=$1`
+	err := r.db.QueryRow(ctx, query, email).Scan(&user.ID, &user.Email, &user.Password, &user.Bday, &user.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (r *UserRepository) DeleteId(id uint) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	query := `DELETE FROM users WHERE id=$1`
-	_, err := r.db.Query(ctx, query, id)
+	_, err := r.db.Exec(ctx, query, id)
 	if err != nil {
 		return err
 	}

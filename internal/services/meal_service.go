@@ -7,6 +7,7 @@ import (
 
 type MealServiceInterface interface {
 	AddMeal(userID int, description string, photoURL string) (*models.Meals, error)
+	GetDailyNutritionStats(days int) (int, error)
 	DeleteMeal(userID int) error
 }
 
@@ -39,6 +40,11 @@ func (s *MealService) AddMeal(userID int, description string, photoURL string) (
 		return nil, err
 	}
 	return meal, nil
+}
+
+func (s *MealService) GetDailyNutritionStats(days int) (int, error) {
+	var test = 0
+	return test, nil
 }
 
 func (s *MealService) DeleteMeal(mealID int) error {

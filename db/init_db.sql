@@ -30,5 +30,22 @@ CREATE TABLE meals
     created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_user_id_meals ON meals(user_id)
-CREATE INDEX idx_user_id_configs ON user_configs(user_id)
+CREATE TABLE refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL DEFAULT now(),
+    created_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    plan VARCHAR(16) DEFAULT 'free',
+    status VARCHAR(16) DEFAULT 'active',
+    started_at TIMESTAMP NOT NULL DEFAULT now(),
+    expires_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_user_id_meals ON meals(user_id);
+CREATE INDEX idx_user_id_configs ON user_configs(user_id);
