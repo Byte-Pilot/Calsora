@@ -24,7 +24,7 @@ func (r *AuthRepository) SaveRefreshToken(userID int, refresh string, exp time.T
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	query := "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)"
+	query := `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`
 	_, err := r.db.Exec(ctx, query, userID, refresh, exp)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func (r *AuthRepository) GetRefreshToken(token string) (userID int, expiresAt ti
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	query := "SELECT user_id, expires_at FROM refresh_tokens WHERE token = $1"
+	query := `SELECT user_id, expires_at FROM refresh_tokens WHERE token = $1`
 	err = r.db.QueryRow(ctx, query, token).Scan(&userID, &expiresAt)
 	if err != nil {
 		return 0, time.Now(), err
@@ -49,7 +49,7 @@ func (r *AuthRepository) DeleteRefreshToken(token string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	query := "DELETE FROM refresh_tokens WHERE token = $1"
+	query := `DELETE FROM refresh_tokens WHERE token = $1`
 	_, err := r.db.Exec(ctx, query, token)
 	if err != nil {
 		return err
