@@ -5,21 +5,21 @@ import (
 	"Calsora/internal/repository"
 )
 
-type MealServiceInterface interface {
+type MealService interface {
 	AddMeal(userID int, description string, photoURL string) (*models.Meals, error)
 	GetDailyNutritionStats(days int) (int, error)
 	DeleteMeal(userID int) error
 }
 
-type MealService struct {
-	repo repository.MealRepositoryInterface
+type mealService struct {
+	repo repository.MealRepository
 }
 
-func NewMealService(repo repository.MealRepositoryInterface) *MealService {
-	return &MealService{repo: repo}
+func NewMealService(repo repository.MealRepository) *mealService {
+	return &mealService{repo: repo}
 }
 
-func (s *MealService) AddMeal(userID int, description string, photoURL string) (*models.Meals, error) {
+func (s *mealService) AddMeal(userID int, description string, photoURL string) (*models.Meals, error) {
 	// gpt
 	description = ""
 	photoURL = ""
@@ -42,11 +42,11 @@ func (s *MealService) AddMeal(userID int, description string, photoURL string) (
 	return meal, nil
 }
 
-func (s *MealService) GetDailyNutritionStats(days int) (int, error) {
+func (s *mealService) GetDailyNutritionStats(days int) (int, error) {
 	var test = 0
 	return test, nil
 }
 
-func (s *MealService) DeleteMeal(mealID int) error {
+func (s *mealService) DeleteMeal(mealID int) error {
 	return s.repo.DeleteMeal(mealID)
 }

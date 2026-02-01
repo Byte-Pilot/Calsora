@@ -7,20 +7,20 @@ import (
 	"time"
 )
 
-type MealRepositoryInterface interface {
+type MealRepository interface {
 	CreateMeal(meal *models.Meals) error
 	DeleteMeal(meal int) error
 }
 
-type MealRepository struct {
+type mealRepository struct {
 	db *pgxpool.Pool
 }
 
-func NewMealRepository(db *pgxpool.Pool) *MealRepository {
-	return &MealRepository{db: db}
+func NewMealRepository(db *pgxpool.Pool) *mealRepository {
+	return &mealRepository{db: db}
 }
 
-func (m *MealRepository) CreateMeal(meals *models.Meals) error {
+func (m *mealRepository) CreateMeal(meals *models.Meals) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -31,7 +31,7 @@ func (m *MealRepository) CreateMeal(meals *models.Meals) error {
 	return nil
 }
 
-func (m *MealRepository) DeleteMeal(meal int) error {
+func (m *mealRepository) DeleteMeal(meal int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

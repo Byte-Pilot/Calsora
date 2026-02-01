@@ -6,34 +6,31 @@ import (
 	"time"
 )
 
-type AuthRepositoryInterface interface {
+type AuthRepository interface {
 	SaveRefreshToken(userID int, refresh string, exp time.Time) error
 	GetRefreshToken(token string) (int, time.Time, error)
 	DeleteRefreshToken(token string) error
+	DeleteAllRefreshTokens(userID int) error
 }
 
-type AuthRepository struct {
+type authRepository struct {
 	db *pgxpool.Pool
 }
 
-func NewAuthRepository(db *pgxpool.Pool) *AuthRepository {
-	return &AuthRepository{db: db}
+func NewAuthRepository(db *pgxpool.Pool) *authRepository {
+	return &authRepository{db: db}
 }
 
-func (r *AuthRepository) SaveRefreshToken(userID int, refresh string, exp time.Time) error {
+func (r *authRepository) SaveRefreshToken(userID int, refresh string, exp time.Time) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	query := `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`
 	_, err := r.db.Exec(ctx, query, userID, refresh, exp)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
-func (r *AuthRepository) GetRefreshToken(token string) (userID int, expiresAt time.Time, err error) {
+func (r *authRepository) GetRefreshToken(token string) (userID int, expiresAt time.Time, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -45,14 +42,20 @@ func (r *AuthRepository) GetRefreshToken(token string) (userID int, expiresAt ti
 	return userID, expiresAt, nil
 }
 
-func (r *AuthRepository) DeleteRefreshToken(token string) error {
+func (r *authRepository) DeleteRefreshToken(token string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	query := `DELETE FROM refresh_tokens WHERE token = $1`
 	_, err := r.db.Exec(ctx, query, token)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
+}
+
+func (r *authRepository) DeleteAllRefreshTokens(userID int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	query := `DELETE FROM refresh_tokens WHERE user_id = $1`
+	_, err := r.db.Exec(ctx, query, userID)
+	return err
 }

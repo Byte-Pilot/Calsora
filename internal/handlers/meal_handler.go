@@ -7,17 +7,17 @@ import (
 	"strconv"
 )
 
-type MealHandlerInterface interface {
+type MealHandler interface {
 	AddMeal(c *gin.Context)
 	DeleteMeal(c *gin.Context)
 	GetDailyNutritionStats(c *gin.Context)
 }
 
 type mealHandler struct {
-	service services.MealServiceInterface
+	service services.MealService
 }
 
-func NewMealHandler(svc services.MealServiceInterface) *mealHandler {
+func NewMealHandler(svc services.MealService) *mealHandler {
 	return &mealHandler{service: svc}
 }
 
@@ -43,13 +43,8 @@ func (mh *mealHandler) AddMeal(c *gin.Context) {
 }
 
 func (mh *mealHandler) DeleteMeal(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid meal ID"})
-		return
-	}
-	err = mh.service.DeleteMeal(id)
+	userID := c.GetInt("user_id")
+	err := mh.service.DeleteMeal(userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Meal not found"})
 		return

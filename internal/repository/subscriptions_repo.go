@@ -7,20 +7,20 @@ import (
 	"time"
 )
 
-type SubscriptionsRepositoryInterface interface {
+type SubscriptionsRepository interface {
 	Create(userID int) (*models.Subscriptions, error)
 	GetSubDataByID(userID int) (*models.Subscriptions, error)
 }
 
-type SubscriptionsRepository struct {
+type subscriptionsRepository struct {
 	db *pgxpool.Pool
 }
 
-func NewSubscriptionsRepository(db *pgxpool.Pool) *SubscriptionsRepository {
-	return &SubscriptionsRepository{db: db}
+func NewSubscriptionsRepository(db *pgxpool.Pool) *subscriptionsRepository {
+	return &subscriptionsRepository{db: db}
 }
 
-func (r *SubscriptionsRepository) Create(userID int) (*models.Subscriptions, error) {
+func (r *subscriptionsRepository) Create(userID int) (*models.Subscriptions, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -33,7 +33,7 @@ func (r *SubscriptionsRepository) Create(userID int) (*models.Subscriptions, err
 	return &userSub, nil
 }
 
-func (r *SubscriptionsRepository) GetSubDataByID(userID int) (*models.Subscriptions, error) {
+func (r *subscriptionsRepository) GetSubDataByID(userID int) (*models.Subscriptions, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

@@ -1,12 +1,12 @@
 package server
 
 import (
+	"Calsora/internal/auth/middleware"
 	"Calsora/internal/handlers"
-	"Calsora/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 
-func RunServer(userHandler handlers.UserHandlerInterface, authHandler handlers.AuthHandlerInterface, mealHandler handlers.MealHandlerInterface) *gin.Engine {
+func RunServer(userHandler handlers.UserHandler, authHandler handlers.AuthHandler, mealHandler handlers.MealHandler) *gin.Engine {
 	r := gin.Default()
 	api := r.Group("/api")
 	{
@@ -17,7 +17,10 @@ func RunServer(userHandler handlers.UserHandlerInterface, authHandler handlers.A
 		protected := api.Group("/")
 		protected.Use(middleware.RequireAuth())
 		{
-			protected.GET("/users/", userHandler.GetById)
+			protected.POST("/auth/logout", authHandler.Logout)
+			protected.POST("/auth/change-password", authHandler.ChangePass)
+
+			protected.POST("/users/", userHandler.GetById)
 			protected.DELETE("/users/delete/", userHandler.DeleteId)
 
 			protected.POST("meals/add", mealHandler.AddMeal)

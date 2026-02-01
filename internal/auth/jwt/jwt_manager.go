@@ -1,4 +1,4 @@
-package utils
+package jwt
 
 import (
 	"github.com/golang-jwt/jwt/v5"
@@ -10,7 +10,7 @@ import (
 type UserJWTClaims struct {
 	UserID       int       `json:"user_id"`
 	Subscription string    `json:"subscription"`
-	ExpiresAt    time.Time `json:"expires_at"`
+	SubExpiresAt time.Time `json:"expires_at"`
 	jwt.RegisteredClaims
 }
 
@@ -20,9 +20,9 @@ func GenerateAccessToken(userID int, subscription string, expiresAt time.Time) (
 	claims := UserJWTClaims{
 		UserID:       userID,
 		Subscription: subscription,
-		ExpiresAt:    expiresAt,
+		SubExpiresAt: expiresAt,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
