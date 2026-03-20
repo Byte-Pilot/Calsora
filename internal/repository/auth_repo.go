@@ -37,7 +37,7 @@ func (r *authRepository) GetRefreshToken(token string) (userID int, expiresAt ti
 	query := `SELECT user_id, expires_at FROM refresh_tokens WHERE token = $1`
 	err = r.db.QueryRow(ctx, query, token).Scan(&userID, &expiresAt)
 	if err != nil {
-		return 0, time.Now(), err
+		return 0, time.Time{}, err
 	}
 	return userID, expiresAt, nil
 }

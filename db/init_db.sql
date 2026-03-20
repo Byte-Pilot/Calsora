@@ -1,6 +1,6 @@
 CREATE TABLE users
 (
-    id INT SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     bday DATE NOT NULL,
@@ -23,10 +23,19 @@ CREATE TABLE meals
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE meal_items (
+    id SERIAL PRIMARY KEY,
+    meal_id INT REFERENCES meals(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    grams SMALLINT  NOT NULL,
     cal SMALLINT NOT NULL,
     protein NUMERIC(6,2) NOT NULL,
     carbs NUMERIC(6,2) NOT NULL,
     fats NUMERIC(6,2) NOT NULL,
+    confidence NUMERIC(3,2) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
@@ -48,4 +57,7 @@ CREATE TABLE subscriptions (
 );
 
 CREATE INDEX idx_user_id_meals ON meals(user_id);
+CREATE INDEX idx_meals_user_data on meals(user_id, created_at);
+CREATE INDEX idx_meal_id_meal_items on meal_items(meal_id);
 CREATE INDEX idx_user_id_configs ON user_configs(user_id);
+CREATE INDEX idx_user_subscriptions on subscriptions(user_id, status, expires_at DESC);

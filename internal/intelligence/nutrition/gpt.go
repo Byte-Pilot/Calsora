@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/invopop/jsonschema"
-	"github.com/openai/openai-go/v3"
+	openai "github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
 	"github.com/openai/openai-go/v3/responses"
 	"os"
@@ -24,37 +24,26 @@ func NewGPTClient() *GPTClient {
 		)}
 }
 
-func GenerateSchema[T any]() interface{} {
+func GenerateSchema[T any]() map[string]any {
 	reflector := jsonschema.Reflector{
 		AllowAdditionalProperties: false,
 		DoNotReference:            true,
 	}
 	var v T
 	schema := reflector.Reflect(v)
-	return schema
+	data, _ := json.Marshal(schema)
+	var result map[string]any
+	_ = json.Unmarshal(data, &result)
+	return result
 }
 
 var MealAnalysisResponseSchema = GenerateSchema[MealAnalysis]()
 
-func (g *GPTClient) AnalyzeMeal(ctx context.Context, text, image string) (*MealAnalysis, error) {
+func (g *GPTClient) AnalyzeMeal(text, image string) (*MealAnalysis, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
-		Name:        "MealAnalysis",
-		Description: openai.String("Schema for meal analysis response"),
-		Schema:      MealAnalysisResponseSchema,
-		Strict:      openai.Bool(true),
-	}
-
-	content := []responses.ResponseInputContentUnionParam{}
-
-	content = append(content, responses.ResponseInputContentUnionParam{
-		OfInputText: &responses.ResponseInputTextParam{
-			Type: "input_text",
-			Text: Prompt,
-		},
-	})
+	var content []responses.ResponseInputContentUnionParam
 
 	if text != "" {
 		content = append(content, responses.ResponseInputContentUnionParam{
@@ -68,46 +57,52 @@ func (g *GPTClient) AnalyzeMeal(ctx context.Context, text, image string) (*MealA
 	if image != "" {
 		content = append(content, responses.ResponseInputContentUnionParam{
 			OfInputImage: &responses.ResponseInputImageParam{
-				Type: "input_image",
-				//ImageURL: image,
+				Type:     "input_image",
+				ImageURL: openai.String("data:image/jpeg;base64," + image),
+				Detail:   responses.ResponseInputImageDetailOriginal,
 			},
 		})
 	}
-	g.client.Embeddings.New()
+
 	resp, err := g.client.Responses.New(ctx, responses.ResponseNewParams{
-		Model: openai.ChatModelGPT5_2,
+		Model:        openai.ChatModelGPT5ChatLatest,
+		Instructions: openai.String(Prompt),
 		Input: responses.ResponseNewParamsInputUnion{
-			OfInputItemList: responses.ResponseInputParam{
-				responses.ResponseInputItemUnionParam{
-					content,
-					"user",
+			OfInputItemList: []responses.ResponseInputItemUnionParam{
+				{
+					OfMessage: &responses.EasyInputMessageParam{
+						Role: "user",
+						Content: responses.EasyInputMessageContentUnionParam{
+							OfInputItemContentList: responses.ResponseInputMessageContentListParam(content),
+						},
+					},
 				},
 			},
 		},
-		ResponseFormat: &responses.ResponseFormatJSONSchemaParam{
-			Type: "json_schema",
-			JSONSchema: responses.ResponseFormatJSONSchemaJSONSchemaParam{
-				Name:   "meal_analysis",
-				Schema: schemaParam,
-			},
+		Text: responses.ResponseTextConfigParam{
+			Format: responses.ResponseFormatTextConfigParamOfJSONSchema(
+				"meal_analysis",
+				MealAnalysisResponseSchema,
+			),
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.New("GPT request failed")
 	}
 
-	if len(resp.Output) == 0 {
+	if len(resp.Output) == 0 || len(resp.Output[0].Content) == 0 {
 		return nil, errors.New("empty response from GPT")
 	}
 
 	var result MealAnalysis
 
-	for _, item := range resp.Output {
-		if item.Type == "output_text" {
-			if err = json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
-				return nil, err
-			}
-			return &result, nil
-		}
+	err = json.Unmarshal(
+		[]byte(resp.Output[0].Content[0].Text),
+		&result,
+	)
+	if err != nil {
+		return nil, errors.New("failed to unmarshal GPT response:" + resp.Output[0].Content[0].Text)
 	}
+
+	return &result, nil
 }

@@ -44,6 +44,7 @@ func RequireAuth() gin.HandlerFunc {
 		}
 		c.Set("user_id", claims.UserID)
 		c.Set("subscription", claims.Subscription)
+		c.Set("sub_status", claims.SubStatus)
 		c.Next()
 	}
 }

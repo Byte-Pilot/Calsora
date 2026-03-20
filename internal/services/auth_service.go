@@ -1,7 +1,7 @@
 package services
 
 import (
-	"Calsora/internal/Error"
+	"Calsora/internal/apperrors"
 	"Calsora/internal/auth/hash"
 	"Calsora/internal/auth/jwt"
 	"Calsora/internal/models"
@@ -17,20 +17,20 @@ type AuthService interface {
 	Login(email, password string) (string, string, error)
 	Refresh(refresh string) (string, string, error)
 	Logout(refresh string) error
-	ChangePass(useriID int, oldPassword, newPassword string) (string, string, error)
+	ChangePass(userID int, oldPassword, newPassword string) (string, string, error)
 }
 
 type authService struct {
-	authRepo repository.AuthRepository
-	userRepo repository.UserRepository
-	subRepo  repository.SubscriptionsRepository
+	authRepo    repository.AuthRepository
+	userService UserService
+	subService  SubService
 }
 
-func NewAuthService(a repository.AuthRepository, u repository.UserRepository, s repository.SubscriptionsRepository) *authService {
+func NewAuthService(a repository.AuthRepository, u UserService, s SubService) *authService {
 	return &authService{
-		authRepo: a,
-		userRepo: u,
-		subRepo:  s,
+		authRepo:    a,
+		userService: u,
+		subService:  s,
 	}
 }
 
@@ -49,30 +49,30 @@ func (s *authService) Register(email, password string, bday time.Time) (string, 
 		Password: hashed,
 		Bday:     bday,
 	}
-	if err := s.userRepo.Create(user); err != nil {
-		return "", "", Error.NewCustomError("repo create: "+err.Error(), "Не удалось создать пользователя")
+	if err := s.userService.Create(user); err != nil {
+		return "", "", apperrors.NewCustomError("repo create: "+err.Error(), "Не удалось создать пользователя")
 	}
 
-	userSub, err := s.subRepo.Create(user.ID)
+	userSub, err := s.subService.Create(user.ID)
 	if err != nil {
-		s.userRepo.DeleteId(user.ID)
-		return "", "", Error.NewCustomError("repo create: "+err.Error(), "Не удалось создать подписку")
+		s.userService.DeleteId(user.ID)
+		return "", "", apperrors.NewCustomError("repo create: "+err.Error(), "Не удалось создать подписку")
 	}
 
-	access, err := jwt.GenerateAccessToken(user.ID, userSub.Plan, userSub.ExpiresAt)
+	access, err := jwt.GenerateAccessToken(user.ID, userSub.Plan, userSub.Status)
 	if err != nil {
-		s.userRepo.DeleteId(user.ID)
-		return "", "", Error.NewCustomError("generate access token: "+err.Error(), "Что-то пошло не так")
+		s.userService.DeleteId(user.ID)
+		return "", "", apperrors.NewCustomError("generate access token: "+err.Error(), "Что-то пошло не так")
 	}
 	refresh, exp, err := jwt.GenerateRefreshToken(user.ID)
 	if err != nil {
-		s.userRepo.DeleteId(user.ID)
-		return "", "", Error.NewCustomError("generate refresh token: "+err.Error(), "Что-то пошло не так")
+		s.userService.DeleteId(user.ID)
+		return "", "", apperrors.NewCustomError("generate refresh token: "+err.Error(), "Что-то пошло не так")
 	}
 
 	err = s.authRepo.SaveRefreshToken(user.ID, refresh, exp)
 	if err != nil {
-		s.userRepo.DeleteId(user.ID)
+		s.userService.DeleteId(user.ID)
 		return "", "", err
 	}
 
@@ -81,23 +81,23 @@ func (s *authService) Register(email, password string, bday time.Time) (string, 
 
 func (s *authService) Login(email, password string) (string, string, error) {
 	var user = &models.User{}
-	user, err := s.userRepo.GetByEmail(email)
+	user, err := s.userService.GetByEmail(email)
 	if err != nil || !hash.CheckPass(password, user.Password) {
-		return "", "", Error.NewCustomError("invalid login data: "+err.Error(), "Неверный логин или пароль")
+		return "", "", apperrors.NewCustomError("invalid login data: ", "Неверный логин или пароль")
 	}
 
-	userSub, err := s.subRepo.GetSubDataByID(user.ID)
+	userSub, err := s.subService.GetSubDataByID(user.ID)
 	if err != nil {
-		return "", "", Error.NewCustomError("GetSubDataByID failed: "+err.Error(), "Не удалось получить данные о подписке")
+		return "", "", apperrors.NewCustomError("GetSubDataByID failed: ", "Не удалось получить данные о подписке")
 	}
 
-	access, err := jwt.GenerateAccessToken(user.ID, userSub.Plan, userSub.ExpiresAt)
+	access, err := jwt.GenerateAccessToken(user.ID, userSub.Plan, userSub.Status)
 	if err != nil {
-		return "", "", Error.NewCustomError("generate access token: "+err.Error(), "Что-то пошло не так")
+		return "", "", apperrors.NewCustomError("generate access token: "+err.Error(), "Что-то пошло не так")
 	}
 	refresh, exp, err := jwt.GenerateRefreshToken(user.ID)
 	if err != nil {
-		return "", "", Error.NewCustomError("generate refresh token: "+err.Error(), "Что-то пошло не так")
+		return "", "", apperrors.NewCustomError("generate refresh token: "+err.Error(), "Что-то пошло не так")
 	}
 
 	err = s.authRepo.SaveRefreshToken(user.ID, refresh, exp)
@@ -115,21 +115,22 @@ func (s *authService) Refresh(refresh string) (string, string, error) {
 	}
 	if exp.Before(time.Now()) {
 		s.authRepo.DeleteRefreshToken(refresh)
-		return "", "", Error.NewCustomError("invalid token", "Сессия истекла, войдите снова")
+		return "", "", apperrors.NewCustomError("invalid token", "Сессия истекла, войдите снова")
 	}
 
-	userSub, err := s.subRepo.GetSubDataByID(userID)
+	userSub, err := s.subService.GetSubDataByID(userID)
 	if err != nil {
-		return "", "", Error.NewCustomError("GetSubDataByID failed: "+err.Error(), "Не удалось получить данные о подписке")
+		return "", "", apperrors.NewCustomError("GetSubDataByID failed: "+err.Error(), "Не удалось получить данные о подписке")
 	}
-	access, err := jwt.GenerateAccessToken(userID, userSub.Plan, userSub.ExpiresAt)
+
+	access, err := jwt.GenerateAccessToken(userID, userSub.Plan, userSub.Status)
 	if err != nil {
-		return "", "", Error.NewCustomError("generate access token: "+err.Error(), "Что-то пошло не так")
+		return "", "", apperrors.NewCustomError("generate access token: "+err.Error(), "Что-то пошло не так")
 	}
 
 	refreshNEW, exp, err := jwt.GenerateRefreshToken(userID)
 	if err != nil {
-		return "", "", Error.NewCustomError("generate refresh token: "+err.Error(), "Что-то пошло не так")
+		return "", "", apperrors.NewCustomError("generate refresh token: "+err.Error(), "Что-то пошло не так")
 	}
 
 	err = s.authRepo.SaveRefreshToken(userID, refreshNEW, exp)
@@ -149,53 +150,51 @@ func (s *authService) Refresh(refresh string) (string, string, error) {
 func (s *authService) Logout(refresh string) error {
 	err := s.authRepo.DeleteRefreshToken(refresh)
 	if err != nil {
-		return Error.NewCustomError("delete refresh token: "+err.Error(), "Что-то пошло не так")
+		return apperrors.NewCustomError("delete refresh token: "+err.Error(), "Что-то пошло не так")
 	}
 	return nil
 }
 
 func (s *authService) ChangePass(userID int, oldPassword, newPassword string) (string, string, error) {
 
-	user, err := s.userRepo.GetById(userID)
+	user, err := s.userService.GetById(userID)
 	if err != nil {
 		return "", "", fmt.Errorf("GetByID: %w", err)
 	}
 	if !hash.CheckPass(oldPassword, user.Password) {
-		return "", "", Error.NewCustomError("oldPassword invalid: "+err.Error(), "Актуальный пароль введен неверно")
+		return "", "", apperrors.NewCustomError("oldPassword invalid: "+err.Error(), "Актуальный пароль введен неверно")
 	}
 	if err := validator.ValidatePass(newPassword); err != nil {
-		return "", "", Error.NewCustomError("newPassword invalid: "+err.Error(), "Новый пароль не соответствует требованиям")
+		return "", "", apperrors.NewCustomError("newPassword invalid: "+err.Error(), "Новый пароль не соответствует требованиям")
 	}
 
 	newHashed, err := hash.HashPass(newPassword)
 	if err != nil {
 		return "", "", fmt.Errorf("hashPass: %w", err)
 	}
-	err = s.userRepo.ChangePass(userID, newHashed)
+	err = s.userService.ChangePass(userID, newHashed)
 	if err != nil {
-		return "", "", Error.NewCustomError("update password: "+err.Error(), "Неудалось обновить пароль")
+		return "", "", apperrors.NewCustomError("update password: "+err.Error(), "Неудалось обновить пароль")
 	}
 
 	err = s.authRepo.DeleteAllRefreshTokens(userID)
 	if err != nil {
-		return "", "", Error.NewCustomError("delete all refresh tokens: "+err.Error(), "Что-то пошло не так")
+		return "", "", apperrors.NewCustomError("delete all refresh tokens: "+err.Error(), "Что-то пошло не так")
 	}
-	/*
-		токены должны быть удалены сразу после смены пароля
-	*/
 
-	userSub, err := s.subRepo.GetSubDataByID(userID)
+	userSub, err := s.subService.GetSubDataByID(userID)
 	if err != nil {
-		return "", "", Error.NewCustomError("GetSubDataByID failed: "+err.Error(), "Войдите в учетную запись повторно")
+		return "", "", apperrors.NewCustomError("GetSubDataByID failed: "+err.Error(), "Войдите в учетную запись повторно")
 	}
-	newAccess, err := jwt.GenerateAccessToken(userID, userSub.Plan, userSub.ExpiresAt)
+
+	newAccess, err := jwt.GenerateAccessToken(userID, userSub.Plan, userSub.Status)
 	if err != nil {
-		return "", "", Error.NewCustomError("generate access token: "+err.Error(), "Войдите в учетную запись повторно")
+		return "", "", apperrors.NewCustomError("generate access token: "+err.Error(), "Войдите в учетную запись повторно")
 	}
 
 	newRefresh, exp, err := jwt.GenerateRefreshToken(userID)
 	if err != nil {
-		return "", "", Error.NewCustomError("generate refresh token: "+err.Error(), "Войдите в учетную запись повторно")
+		return "", "", apperrors.NewCustomError("generate refresh token: "+err.Error(), "Войдите в учетную запись повторно")
 	}
 	err = s.authRepo.SaveRefreshToken(userID, newRefresh, exp)
 	if err != nil {

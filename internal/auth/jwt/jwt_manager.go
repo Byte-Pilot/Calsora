@@ -8,19 +8,19 @@ import (
 )
 
 type UserJWTClaims struct {
-	UserID       int       `json:"user_id"`
-	Subscription string    `json:"subscription"`
-	SubExpiresAt time.Time `json:"expires_at"`
+	UserID       int    `json:"user_id"`
+	Subscription string `json:"subscription"`
+	SubStatus    string `json:"sub_status"`
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(userID int, subscription string, expiresAt time.Time) (string, error) {
+func GenerateAccessToken(userID int, subscription string, subStatus string) (string, error) {
 	secret := []byte(os.Getenv("JWT_SECRET_ACCESS"))
 
 	claims := UserJWTClaims{
 		UserID:       userID,
 		Subscription: subscription,
-		SubExpiresAt: expiresAt,
+		SubStatus:    subStatus,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
 		},
