@@ -183,7 +183,7 @@ func (s *authService) ChangePass(userID int, oldPassword, newPassword string) (s
 		return "", "", fmt.Errorf("GetByID: %w", err)
 	}
 	if !hash.CheckPass(oldPassword, user.Password) {
-		return "", "", apperrors.NewCustomError("oldPassword invalid: "+err.Error(), "Актуальный пароль введен неверно")
+		return "", "", apperrors.NewCustomError("oldPassword invalid: ", "Актуальный пароль введен неверно")
 	}
 	if err := validator.ValidatePass(newPassword); err != nil {
 		return "", "", apperrors.NewCustomError("newPassword invalid: "+err.Error(), "Новый пароль не соответствует требованиям")

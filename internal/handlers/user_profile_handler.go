@@ -3,6 +3,7 @@ package handlers
 import (
 	"Calsora/internal/models"
 	"Calsora/internal/services"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -30,6 +31,10 @@ func (h *userProfileHandler) GetDailyIntake(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if req.Profile == nil || req.Goal == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"invalid JSON request": errors.New("profile and goal must be provided")})
 		return
 	}
 	req.Profile.UserID = userID

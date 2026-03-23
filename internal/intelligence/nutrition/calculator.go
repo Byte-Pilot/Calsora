@@ -42,9 +42,9 @@ func CalculateNorm(profile *models.UserProfile, goal *models.UserGoal, age int) 
 	switch goal.Type {
 	case "lose":
 		dailyIntake.Cal = int(tdee - ((calPerKgFat * goal.WeeklyRate) / 7))
-		dailyIntake.Protein = (float64(dailyIntake.Cal) * 0.19) / 4
+		dailyIntake.Protein = (float64(dailyIntake.Cal) * 0.22) / 4
 		dailyIntake.Carbs = (float64(dailyIntake.Cal) * 0.51) / 4
-		dailyIntake.Fats = (float64(dailyIntake.Cal) * 0.30) / 9
+		dailyIntake.Fats = (float64(dailyIntake.Cal) * 0.27) / 9
 	case "gain":
 		dailyIntake.Cal = int(tdee + ((calPerKgMuscle * goal.WeeklyRate) / 7))
 		dailyIntake.Protein = (float64(dailyIntake.Cal) * 0.22) / 4

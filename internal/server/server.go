@@ -20,11 +20,12 @@ func RunServer(userHandler handlers.UserHandler, uProfileHandler handlers.UserPr
 		protected.Use(middleware.RequireAuth())
 		{
 			protected.POST("/auth/logout", authHandler.Logout)
+			protected.POST("/auth/logout-all", authHandler.LogoutAllSessions)
 			protected.POST("/auth/change-password", authHandler.ChangePass)
 
 			protected.POST("/subscription", subHandler.CreatePremium)
 
-			protected.POST("/users", userHandler.GetById)
+			protected.GET("/users", userHandler.GetById)
 			protected.DELETE("/users/delete", userHandler.DeleteId)
 
 			protected.POST("/profile", uProfileHandler.GetDailyIntake)

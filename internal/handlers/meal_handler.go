@@ -117,6 +117,7 @@ func (mh *mealHandler) UpdateMeal(c *gin.Context) {
 	}
 	if updateMealReq.Meal == nil || updateMealReq.Items == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"invalid JSON request": errors.New("meal and items must be provided")})
+		return
 	}
 
 	updateMealReq.Meal.UserID = userID
@@ -136,6 +137,10 @@ func (mh *mealHandler) GetDailyNutritionStats(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid days", "days value": err})
 		return
 	}
+	if days > 365 {
+		days = 365
+	}
+
 	stats, err := mh.service.GetDailyNutritionStats(userID, days)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
