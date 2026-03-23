@@ -105,8 +105,6 @@ func (m *mealRepository) UpdateMeal(meal *models.Meals, items []*models.MealItem
 	}
 	defer tx.Rollback(ctx)
 
-	log.Println("Start")
-
 	query := `UPDATE meals SET name=$1 WHERE user_id=$2 AND id=$3`
 	cmdTag, err := tx.Exec(ctx, query, meal.Name, meal.UserID, meal.ID)
 	if err != nil {
@@ -116,15 +114,12 @@ func (m *mealRepository) UpdateMeal(meal *models.Meals, items []*models.MealItem
 		return errors.New("meal not found")
 	}
 
-	log.Println("First DB request successfully")
-
 	query = `UPDATE meal_items SET name=$1, grams=$2, cal=$3, protein=$4, carbs=$5, fats=$6 WHERE id=$7 AND  meal_id=$8`
 	for _, item := range items {
 		if _, err := tx.Exec(ctx, query, item.Name, item.Grams, item.Cal, item.Protein, item.Carbs, item.Fats, item.ID, meal.ID); err != nil {
 			return err
 		}
 	}
-	log.Println("Second DB request successfully")
 	err = tx.Commit(ctx)
 	if err != nil {
 		return err

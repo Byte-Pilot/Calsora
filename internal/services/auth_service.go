@@ -17,6 +17,7 @@ type AuthService interface {
 	Login(email, password string) (string, string, error)
 	Refresh(refresh string) (string, string, error)
 	Logout(refresh string) error
+	LogoutAllSessions(userID int, refresh string) error
 	ChangePass(userID int, oldPassword, newPassword string) (string, string, error)
 }
 
@@ -151,6 +152,26 @@ func (s *authService) Logout(refresh string) error {
 	err := s.authRepo.DeleteRefreshToken(refresh)
 	if err != nil {
 		return apperrors.NewCustomError("delete refresh token: "+err.Error(), "Что-то пошло не так")
+	}
+	return nil
+}
+
+func (s *authService) LogoutAllSessions(userID int, refresh string) error {
+	userIDFromDB, exp, err := s.authRepo.GetRefreshToken(refresh)
+	if err != nil {
+		return err
+	}
+	if exp.Before(time.Now()) {
+		s.authRepo.DeleteRefreshToken(refresh)
+		return apperrors.NewCustomError("invalid token", "Сессия истекла, войдите снова")
+	}
+	if userIDFromDB != userID {
+		return apperrors.NewCustomError("invalid userID", "Пользователь не совпадает")
+	}
+
+	err = s.authRepo.DeleteAllRefreshTokens(userID)
+	if err != nil {
+		return apperrors.NewCustomError("delete refresh tokens: "+err.Error(), "Что-то пошло не так")
 	}
 	return nil
 }

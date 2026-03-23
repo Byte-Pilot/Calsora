@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-redis/redis/v8"
+	"log"
 	"os"
 	"time"
 )
 
 type Limiter interface {
-	LimitByIP(userIP string) (bool, error)
+	LimitByIP(userIP string, limit, window int) (bool, error)
 	//LimitByUserID(userID int) (bool, error)
 }
 
@@ -39,25 +40,25 @@ func ConnectRedis() (*redis.Client, bool) {
 	defer pingCancel()
 
 	if err := rdb.Ping(pingCtx).Err(); err != nil {
-		fmt.Printf("Failed to connect to redis server: %s\n", err)
+		log.Fatalf("Failed to connect to redis server: %s\n", err)
 		return nil, false
 	}
 	return rdb, true
 }
 
-func (r *rateLimiter) LimitByIP(ip string) (bool, error) {
+func (r *rateLimiter) LimitByIP(userIP string, limit, window int) (bool, error) {
 	ctx := context.Background()
 
-	key := fmt.Sprintf("ratelimiter:ip:%s", ip)
+	key := fmt.Sprintf("ratelimiter:ip:%s", userIP)
 	count, err := r.Client.Incr(ctx, key).Result()
 	if err != nil {
 		return false, err
 	}
 
 	if count == 1 {
-		r.Client.Expire(ctx, key, (time.Duration(r.Window))*time.Second)
+		r.Client.Expire(ctx, key, (time.Duration(window))*time.Second)
 	}
-	if count > int64(r.Limit) {
+	if count > int64(limit) {
 		return false, nil
 	}
 

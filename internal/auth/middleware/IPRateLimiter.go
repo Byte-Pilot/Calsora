@@ -5,13 +5,23 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 )
 
 func IPRateLimitMiddleware(limiter ratelimiter.Limiter) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIP := c.ClientIP()
+		limit, err := strconv.Atoi(os.Getenv("RATE_LIMIT"))
+		if err != nil {
+			limit = 60
+		}
+		window, err := strconv.Atoi(os.Getenv("RATE_WINDOW"))
+		if err != nil {
+			window = 60
+		}
 
-		allowed, err := limiter.LimitByIP(userIP)
+		allowed, err := limiter.LimitByIP(userIP, limit, window)
 		if err != nil {
 			log.Printf("rate limiter error: %v", err)
 			c.Next()

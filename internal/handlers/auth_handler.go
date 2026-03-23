@@ -14,6 +14,7 @@ type AuthHandler interface {
 	Login(c *gin.Context)
 	Refresh(c *gin.Context)
 	Logout(c *gin.Context)
+	LogoutAllSessions(c *gin.Context)
 	ChangePass(c *gin.Context)
 }
 
@@ -29,7 +30,7 @@ func NewAuthHandler(service services.AuthService) *authHandler {
 
 func (a *authHandler) Register(c *gin.Context) {
 	var req struct {
-		Email    string `json:"email"`
+		Email    string `json:"email" binding:"email"`
 		Password string `json:"password"`
 		Bday     string `json:"bday"`
 	}
@@ -62,7 +63,7 @@ func (a *authHandler) Register(c *gin.Context) {
 
 func (a *authHandler) Login(c *gin.Context) {
 	var req struct {
-		Email    string `json:"email"`
+		Email    string `json:"email" binding:"email"`
 		Password string `json:"password"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -144,6 +145,38 @@ func (a *authHandler) Logout(c *gin.Context) {
 		refresh = req.RefreshToken
 	}
 	err = a.service.Logout(refresh)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "logout failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+func (a *authHandler) LogoutAllSessions(c *gin.Context) {
+	var refresh string
+	var err error
+
+	if httphelpers.IsWebClient(c) {
+		refresh, err = c.Cookie("refresh_token")
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
+			return
+		}
+		httphelpers.ClearAuthCookies(c)
+	} else {
+		var req struct {
+			RefreshToken string `json:"refresh_token"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
+			return
+		}
+		refresh = req.RefreshToken
+	}
+
+	userID := c.GetInt("user_id")
+	err = a.service.LogoutAllSessions(userID, refresh)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "logout failed"})
 		return

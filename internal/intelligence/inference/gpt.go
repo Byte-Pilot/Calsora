@@ -1,4 +1,4 @@
-package nutrition
+package inference
 
 import (
 	"context"

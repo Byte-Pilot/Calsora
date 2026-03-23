@@ -4,7 +4,7 @@ import (
 	"Calsora/internal/config"
 	"Calsora/internal/db"
 	"Calsora/internal/handlers"
-	"Calsora/internal/intelligence/nutrition"
+	"Calsora/internal/intelligence/inference"
 	"Calsora/internal/repository"
 	"Calsora/internal/server"
 	"Calsora/internal/services"
@@ -31,7 +31,7 @@ func main() {
 
 	connDB, err := db.ConncetPostgres(conf.PostgresURL)
 	if err != nil {
-		log.Fatalf("Failed to cnnect to DB: %v\n", err)
+		log.Fatalf("Failed to connect to DB: %v\n", err)
 	}
 	if err := connDB.Ping(context.Background()); err != nil {
 		log.Fatalf("Database ping failed: %v", err)
@@ -51,6 +51,10 @@ func main() {
 	userService := services.NewUserService(userRepo)
 	userHandler := handlers.NewUserHandler(userService)
 
+	uProfileRepo := repository.NewUserProfileRepository(connDB)
+	uProfileService := services.NewUserProfileService(uProfileRepo, userService)
+	uProfileHandler := handlers.NewUserProfileHandler(uProfileService)
+
 	subRepo := repository.NewSubscriptionsRepository(connDB)
 	subService := services.NewSubService(subRepo)
 	subHandler := handlers.NewSubHandler(subService)
@@ -59,12 +63,12 @@ func main() {
 	authService := services.NewAuthService(authRepo, userService, subService)
 	authHandler := handlers.NewAuthHandler(authService)
 
-	nutritionAI := nutrition.NewGPTClient()
+	nutritionAI := inference.NewGPTClient()
 	mealRepo := repository.NewMealRepository(connDB)
 	mealService := services.NewMealService(mealRepo, nutritionAI)
 	mealHandler := handlers.NewMealHandler(mealService)
 
-	router := server.RunServer(userHandler, subHandler, authHandler, mealHandler, rateLimiterService)
+	router := server.RunServer(userHandler, uProfileHandler, subHandler, authHandler, mealHandler, rateLimiterService)
 	s := &http.Server{
 		Addr:    ":" + conf.Port,
 		Handler: router,

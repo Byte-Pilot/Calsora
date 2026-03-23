@@ -1,4 +1,4 @@
-package nutrition
+package inference
 
 type MealAnalysis struct {
 	Name  string              `json:"name" jsonschema_description:"The name of the analyzed meal or dish"`

@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RunServer(userHandler handlers.UserHandler, subHandler handlers.SubHandler, authHandler handlers.AuthHandler, mealHandler handlers.MealHandler, rateLimiterService ratelimiter.Limiter) *gin.Engine {
+func RunServer(userHandler handlers.UserHandler, uProfileHandler handlers.UserProfileHandler, subHandler handlers.SubHandler, authHandler handlers.AuthHandler, mealHandler handlers.MealHandler, rateLimiterService ratelimiter.Limiter) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.IPRateLimitMiddleware(rateLimiterService))
 	api := r.Group("/api")
@@ -26,6 +26,8 @@ func RunServer(userHandler handlers.UserHandler, subHandler handlers.SubHandler,
 
 			protected.POST("/users", userHandler.GetById)
 			protected.DELETE("/users/delete", userHandler.DeleteId)
+
+			protected.POST("/profile", uProfileHandler.GetDailyIntake)
 
 			premium := protected.Group("")
 			premium.Use(middleware.RequireActiveSubscription())

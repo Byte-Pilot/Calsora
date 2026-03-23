@@ -3,7 +3,7 @@ package services
 import (
 	"Calsora/internal/apperrors"
 	"Calsora/internal/image"
-	"Calsora/internal/intelligence/nutrition"
+	"Calsora/internal/intelligence/inference"
 	"Calsora/internal/models"
 	"Calsora/internal/repository"
 	"encoding/base64"
@@ -22,10 +22,10 @@ type MealService interface {
 
 type mealService struct {
 	repo repository.MealRepository
-	gpt  *nutrition.GPTClient
+	gpt  *inference.GPTClient
 }
 
-func NewMealService(repo repository.MealRepository, gpt *nutrition.GPTClient) *mealService {
+func NewMealService(repo repository.MealRepository, gpt *inference.GPTClient) *mealService {
 	return &mealService{repo: repo, gpt: gpt}
 }
 
@@ -103,9 +103,9 @@ func (s *mealService) EditMeal(userID, mealID int, description string, photoByte
 	}
 	meal.ID, meal.UserID = mealID, userID
 
-	var promptItems []nutrition.MealAnalysisItems
+	var promptItems []inference.MealAnalysisItems
 	for _, item := range items {
-		promptItems = append(promptItems, nutrition.MealAnalysisItems{
+		promptItems = append(promptItems, inference.MealAnalysisItems{
 			Name:     item.Name,
 			Grams:    item.Grams,
 			Calories: item.Cal,
