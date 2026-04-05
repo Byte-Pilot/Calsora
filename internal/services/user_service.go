@@ -3,50 +3,38 @@ package services
 import (
 	"Calsora/internal/models"
 	"Calsora/internal/repository"
-	"Calsora/internal/utils"
-	"fmt"
-	"time"
 )
 
-type UserServiceInterface interface {
-	Register(email, password string, bday time.Time) (*models.User, error)
-	GetById(id uint) (*models.User, error)
-	DeleteId(id uint) error
+type UserService interface {
+	Create(user *models.User) error
+	GetById(id int) (*models.User, error)
+	GetByEmail(email string) (*models.User, error)
+	ChangePass(id int, newPass string) error
+	DeleteId(id int) error
 }
 
-type UserService struct {
-	repo repository.UserRepositoryInterface
+type userService struct {
+	repo repository.UserRepository
 }
 
-func NewUserService(repo *repository.UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo repository.UserRepository) *userService {
+	return &userService{repo: repo}
 }
 
-func (s *UserService) Register(email, password string, bday time.Time) (*models.User, error) {
-	if err := utils.ValidatePass(password); err != nil {
-		return nil, fmt.Errorf("validatePass: ", err)
-	}
-
-	hashed, err := utils.HashPass(password)
-	if err != nil {
-		return nil, fmt.Errorf("hashPass: ", err)
-	}
-
-	var user = &models.User{
-		Email:    email,
-		Password: hashed,
-		Bday:     bday,
-	}
-	if err := s.repo.Create(user); err != nil {
-		return nil, fmt.Errorf("db create user: %w", err)
-	}
-	return user, nil
+func (s *userService) Create(user *models.User) error {
+	return s.repo.Create(user)
 }
-
-func (s *UserService) GetById(id uint) (*models.User, error) {
+func (s *userService) GetById(id int) (*models.User, error) {
 	return s.repo.GetById(id)
 }
 
-func (s *UserService) DeleteId(id uint) error {
+func (s *userService) GetByEmail(email string) (*models.User, error) {
+	return s.repo.GetByEmail(email)
+}
+
+func (s *userService) ChangePass(id int, newPass string) error {
+	return s.repo.ChangePass(id, newPass)
+}
+func (s *userService) DeleteId(id int) error {
 	return s.repo.DeleteId(id)
 }
